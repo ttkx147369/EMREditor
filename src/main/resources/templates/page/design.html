@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>病历设计</title>
+    <link rel="stylesheet" href="/layui/css/layui.css">
+    <link rel="stylesheet" type="text/css" href="/css/comm.css">
+    <link rel="stylesheet" type="text/css" href="/css/page/design.css">
+    <script src="/js/comm.js" type="text/javascript"></script>
+    <script src="/layui/layui.js"></script>
+    <script type="text/javascript" src="/js/page/json.js"></script>
+    <script type="text/javascript" src="/js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="/js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/js/page/design.js"></script>
+    <script type="text/javascript" src="/js/page/designTable.js"></script>
+</head>
+<body>
+    <!--<h1>病历设计</h1>-->
+    <div class="main">
+        <div class="tool-bar">
+            <button class="layui-btn layui-btn-normal layui-btn-xs" optype="addform">添加元素</button>
+            <button class="layui-btn layui-btn-danger layui-btn-xs" optype="addtable">添加表格</button>
+            <button class="layui-btn layui-btn-warm layui-btn-xs" optype="addform" ele_type="1">分类标题</button>
+            <button class="layui-btn layui-btn-xs" optype="addform" ele_type="2">label</button>
+            <button class="layui-btn layui-btn-danger layui-btn-xs" optype="addform" ele_type="9">说明性文字</button>
+        </div>
+        <div id="optfile">
+        </div>
+    </div>
+</body>
+<!-- 添加表单元素 -->
+<div id="addform" class="hidden"></div>
+<!-- 添加表格 -->
+<div id="addtable" class="hidden"></div>
+<!-- 字体内容样式 -->
+<div id="textcss" class="hidden"></div>
+<!-- css内容样式 -->
+<div id="cssstyle" class="hidden"></div>
+<!-- 表格单元格内添加表单元素 -->
+<div id="tableFormEle" class="hidden"></div>
+</html>

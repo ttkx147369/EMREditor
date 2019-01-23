@@ -1,0 +1,8 @@
+#optfile {
+    max-width: 1000px;
+    margin: 0px auto;
+}
+.layui-textarea {
+    min-height: 50px;
+    padding: 0px;
+}

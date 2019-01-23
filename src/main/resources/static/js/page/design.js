@@ -1,0 +1,423 @@
+/**
+ * 普通的表单元素和表格是分开的，
+ * 弹窗也是两个不同的方法体系
+ */
+//被选中的元素
+var selectedEle = null;
+var pageSize = {width: document.documentElement.clientWidth, height: document.documentElement.clientHeight}
+//初始化layui插件
+var layer, form;
+layui.use(['layer', 'form'], function () {
+    layer = layui.layer;
+    form = layui.form;
+
+    form.on('select(ele_type)', function (data) {
+        showAlertEle(data.value, 'addform'); //得到被选中的值
+    });
+});
+$(function () {
+    initpage(data.dataadd, 'addform');
+    initpage(data.tableadd, 'addtable');
+    initpage(data.textcss, 'textcss');
+    initpage(data.cssstyle, 'cssstyle');
+    initpage(data.tableFormEle, 'tableFormEle');
+    initdata();
+    $('.tool-bar').find('button').each(function () {
+        $(this).click(function () {
+            optalert($(this).attr('optype'), $(this).attr("ele_type"))
+        });
+    });
+});
+
+/**
+ * 打开操作弹窗
+ * @param type 弹窗div的id值，即是按钮的optype属性值
+ * @param ele_type 更详细的optype分类
+ */
+function optalert(type, ele_type) {
+    var title = '';
+    var ele_id = $(selectedEle).attr('ele_id');
+    for (var i in data.rightMenu) {//从rightMenu常量中取出弹窗title
+        if (data.rightMenu[i].id === type) {
+            if (ele_type === '1') title = '分类标题';
+            else if (ele_type === '2') title = 'label';
+            else if (ele_type === '9') title = '说明性文字';
+            else title = data.rightMenu[i].text;
+            break;
+        }
+    }
+    menuFun[type](type, ele_id, title, ele_type);
+}
+
+/**
+ * 根据不同的元素类型设置展示弹窗中的不同项及必填项
+ * @param ele_type
+ * @param type
+ */
+function showAlertEle(ele_type, type) {
+    //3:'输入框', 4:'下拉框', 5:'单选框', 6:'多选框', 7:'文本域
+    //label ele_id ele_type ele_conn ele_value limit_type limit_length limit_range limit_char occupy_col occupy_row
+    var formobj = $('#' + type).find("form");
+    for (var i = 0, len = data.dataadd.length; i < len; i++) {
+        if (data.dataadd[i].hidden) continue;
+        formobj.find('#div' + data.dataadd[i].id).show().attr('required', 'true');
+    }
+    var hiddenele = [];
+    if (ele_type === '1' || ele_type === '2' || ele_type === '9') {
+        hiddenele = ['ele_id', 'ele_type', 'ele_conn', 'ele_value', 'limit_type', 'limit_length', 'limit_range', 'limit_char', 'occupy_col', 'occupy_row'];
+    } else if (ele_type === '4' || ele_type === '5' || ele_type === '6') {
+        hiddenele = ['limit_type', 'limit_length', 'limit_range', 'limit_char', 'occupy_col', 'occupy_row', 'show_seq'];
+        formobj.find('#divele_conn').removeAttr('required');
+    } else if (ele_type === '3') {
+        hiddenele = ['ele_value', 'occupy_col', 'occupy_row'];
+        formobj.find('#divele_conn').removeAttr('required');
+        formobj.find('#divlimit_type').removeAttr('required');
+        formobj.find('#divlimit_length').removeAttr('required');
+        formobj.find('#divlimit_range').removeAttr('required');
+        formobj.find('#divlimit_char').removeAttr('required');
+    } else if (ele_type === '7') {
+        hiddenele = ['ele_value', 'occupy_col', 'occupy_row'];
+        formobj.find('#divele_conn').removeAttr('required');
+        formobj.find('#divlimit_type').removeAttr('required');
+        formobj.find('#divlimit_length').removeAttr('required');
+        formobj.find('#divlimit_range').removeAttr('required');
+        formobj.find('#divlimit_char').removeAttr('required');
+        formobj.find('#divoccupy_col').removeAttr('required');
+        formobj.find('#divoccupy_row').removeAttr('required');
+    }
+    for (var i = 0, len = hiddenele.length; i < len; i++) {
+        formobj.find('#div' + hiddenele[i]).hide().removeAttr('required');
+    }
+}
+
+/**
+ * 点击右键或菜单栏的弹出窗体
+ * @param type
+ * @param ele_id
+ * @param title
+ * @param ele_type
+ */
+function openalert(type, ele_id, title, ele_type) {
+    var formobj = $('#' + type).find("form");
+    clearform(type);//先将对应表单中的数据清空
+    var url = '';
+    if (selectedEle != null && selectedEle.outerHTML.search('</h1>') !== -1) {
+        url = '/dpage/addpAddData';
+    } else {
+        formobj.find('input[name=idele]').val(ele_id);
+        url = '/dpage/addPageEle';
+    }
+    layer.open({
+        title: title,
+        type: 1,
+        area: ['800px', '400px'],
+        content: $('#' + type),
+        btn: ['确定', '取消'],
+        yes: function () {
+            var value = formobj.serializeArray();
+            if (!required(value, type, ele_type)) return;
+            //如果是文字样式或css样式需要单独处理数据
+            if (type === 'textcss' || type === 'cssstyle') value = clickOpenSure(value, type);
+
+            if (ele_type === '1' || ele_type === '2' || ele_type === '9')
+                for (var i = 0, len = value.length; i < len; i++) {
+                    if (value[i].name !== 'ele_type') {
+                        continue;
+                    }
+                    value[i].value = ele_type;
+                    break;
+                }
+            //提交保存数据，如果成功则刷新页面
+            $.ajax({
+                url: url,
+                async: true,
+                data: value,
+                type: "POST",
+                success: function (res) {
+                    console.log(res);
+                    if (res * 1 > 0) window.location.reload();
+                    else layer.msg("保存失败");
+                },
+                error: function (res) {
+                    console.log(res)
+                }
+            });
+        },
+        btn2: function (index, layero) {
+
+        }
+    });
+}
+
+/**
+ * 验证必填项是否已填写
+ * @param value
+ * @param type
+ * @param ele_type
+ * @returns {boolean} true:验证通过
+ */
+function required(value, type, ele_type) {
+    var formobj = $('#' + type).find("form");
+    var res = true;
+    if (type === 'addform')
+        for (var i = 0, len = value.length; i < len; i++) {
+            if (formobj.find('#div' + value[i].name).attr('required') === 'required') {
+                if (value[i].value != null && value[i].value !== '') continue;
+                for (var j = 0, le = data.dataadd.length; j < le; j++) {
+                    if (data.dataadd[j].id === value[i].name) {
+                        layer.msg(data.dataadd[j].text + "没有填写值");
+                        break;
+                    }
+                }
+                res = false;
+                break;
+            }
+        }
+    return res;
+}
+
+/**
+ * 点击弹窗中的确认之后，如果是样式弹窗则需要对表单中的数据进行处理
+ * @param value
+ */
+function clickOpenSure(value, type) {
+    var res = [];
+    var str = '';
+    for (var i = 0, len = value.length; i < len; i++) {
+        var item = value[i];
+        if (item.name === 'idele' || item.name === 'idpage') {
+            res[res.length] = {name: item.name, value: item.value};
+        } else {
+            if (item.value != null && item.value != '') str += item.name + ':' + item.value + ';';
+        }
+    }
+    res[res.length] = {name: type, value: str};
+    return res
+}
+
+/**
+ * 清空表单元素(为什么idele元素的值没有被清除)
+ * @param type 需要清空数据的表单id
+ */
+function clearform(type) {
+    var value = $('#' + type).find("form").serializeArray();
+    var res = {};
+    for (var i = 0, len = value.length; i < len; i++) {
+        if (value[i].name === 'idpage') continue;
+        if (type === 'addtable' && value[i].name === 'ele_type') continue;
+        res[value[i].name] = '';
+    }
+    form.val(type, res);
+}
+
+/**
+ * 打开弹窗之前先回填数据（标题的样式没有回填）
+ * @param type
+ * @param ele_id
+ */
+function updDataShow(type, ele_id) {
+    var ele_type = '';
+    $.ajax({
+        url: '/dpage/getPageEle', async: true, data: {idele: ele_id}, type: "POST",
+        success: function (res) {
+            ele_type = res[0].ele_type;
+            var formobj = $('#' + type).find("form");
+            if (type === 'addform') {
+                form.val(type, res[0]);
+                showAlertEle(ele_type, 'addform');
+            } else
+                form.val(type, strtojson(res[0][type]));
+            formobj.find('input[name=idele]').val(res[0]['idele']);//当前eleid
+            formobj.find('input[name=idpage]').val(res[0]['idpage']);//当前病历模板id
+            form.render(null, type);
+        },
+        error: function (res) {
+            console.log(res)
+        }
+    });
+    return ele_type;
+}
+
+/**
+ * 初始化页面元素，几个下拉框的值
+ * @param data
+ * @param divid
+ */
+function initpage(data, divid) {
+    var htmlstr = '<form action="javascript:return false;" class="layui-form" lay-filter="' + divid + '">';
+    for (var i = 0, len = data.length; i < len; i++) {
+        var item = data[i];
+        htmlstr += '<div id="div' + item.id + '" class="layui-form-item' + (item.hidden ? ' hidden' : '') + '">';
+        htmlstr += '<label class="layui-form-label">' + item.text + '</label>';
+        htmlstr += '<div class="layui-input-inline">';
+        htmlstr += formele(item);
+        htmlstr += '</div>';
+        htmlstr += '<div class="layui-form-mid layui-word-aux">' + item.hint + '</div>';
+        htmlstr += '</div>';
+    }
+    htmlstr += '</form>';
+    $('#' + divid).append(htmlstr);
+}
+
+/**
+ * 根据data中的数据组成页面对应的页面元素
+ * @param data 页面数据对象
+ * @returns {string} 组合完成的页面元素字符串
+ */
+function formele(data) {
+    var htmlstr = '';
+    var defval = data.defval;
+    if (data.type === 'input') {
+        htmlstr += '<input type="text" name="' + data.id /*+ '" id="' + data.id*/ + '" value="' + (defval ? defval : '') + '" lay-verify="required" class="layui-input">';
+    } else if (data.type === 'select') {
+        htmlstr += '<select name="' + data.id/* + '" id="' + data.id*/ + '"  lay-filter="' + data.id + '">';
+        htmlstr += '<option value=""></option>';
+        for (var i in data.value) {
+            htmlstr += '<option value="' + i + '" ' + (defval === i ? 'selected' : '') + '>' + data.value[i] + '</option>';
+        }
+        htmlstr += '</select>';
+    } else if (data.type === 'radio') {
+        for (var i in data.value) {
+            htmlstr += '<input type="radio" name="' + data.id /*+ '" id="' + data.id*/ + '" value="' + i + '" title="' + data.value[i] + '" ' + (defval === i ? 'checked' : '') + '>';
+        }
+    } else if (data.type === 'checkbox') {
+        for (var i in data.value) {
+            htmlstr += '<input type="checkbox" name="' + data.id /*+ '" id="' + data.id*/ + '" value="' + i + '" title="' + data.value[i] + '" ' + (defval === i ? 'checked' : '') + '>';
+        }
+    } else if (data.type === 'textarea') {
+        htmlstr += '<textarea name="' + data.id /*+ '" id="' + data.id*/ + '" class="layui-textarea" value="' + (defval ? defval : '') + '"></textarea>';
+    } else {
+
+    }
+    return htmlstr;
+}
+
+/**
+ * 初始化数据项，病历设计中的数据项
+ */
+function initdata() {
+    //阻止浏览器默认右键点击事件
+    $("#optfile").bind("contextmenu", function () {
+        return false;
+    }).mousedown(function (e) {
+        if (3 === e.which) {//右键为3
+            $('#rightMenu').remove();
+            srightMenu(e.clientX, e.clientY);
+        } else if (1 === e.which) { //左键为1
+            $('#rightMenu').remove();
+        }
+    });
+    /**
+     * 获取模板标题
+     */
+    $.ajax({
+        url: '/dpage/getPageData',
+        async: false,
+        data: {idpage: getQueryString('idpage')},
+        type: "POST",
+        success: function (res) {
+            $('#optfile').append('<h1 style="' + (res[0].textcss == null ? '' : res[0].textcss) + (res[0].cssstyle == null ? '' : res[0].cssstyle) + '" data_id="">' +
+                res[0].page_title + '</h1>');//title样式不能修改么？？？
+            $('#optfile').children('h1').mousedown(function () {
+                $(selectedEle).removeClass('selected');
+                selectedEle = this;
+                $(this).addClass('selected');
+            });
+        },
+        error: function (res) {
+            console.log(res);
+        }
+    });
+    /**
+     * 获取模板内容
+     */
+    $.ajax({
+        url: '/dpage/getPageEle',
+        async: false,
+        data: {idpage: getQueryString('idpage')},
+        type: "POST",
+        success: function (res) {
+            $('#optfile').find('h1').after(makePageEle(res));
+            $('#optfile').find('form').children('div').each(function () {
+                $(this).mousedown(function (e) {
+                    $(selectedEle).removeClass('selected');
+                    selectedEle = this;
+                    $(this).addClass('selected');
+                }).draggable({
+                    addClasses: false,
+                    revert: true
+                }).droppable({
+                    drop: function (event, ui) {
+                        var oldseq = $(selectedEle).attr('ele_seq');
+                        var newseq = $(this).attr('ele_seq');
+                        if (oldseq * 1 == newseq * 1) return;
+                        $.ajax({
+                            url: '/dpage/updseq',
+                            async: false,
+                            data: {
+                                idpage: getQueryString('idpage'),
+                                oldid: $(selectedEle).attr('ele_id'),
+                                oldseq: oldseq,
+                                newid: $(this).attr("ele_id"),
+                                newseq: newseq
+                            },
+                            type: "POST",
+                            success: function (res) {
+                                window.location.reload();
+                            }, error: function (res) {
+
+                            }
+                        });
+                    }
+                });
+            });
+            opttable();
+        },
+        error: function (res) {
+            console.log(res);
+        }
+    });
+}
+
+/**
+ * 打开右键菜单
+ * @param x
+ * @param y
+ */
+function srightMenu(x, y) {
+    var poition = 'left:' + x + 'px;top:' + y + 'px;';
+    if(pageSize.height - y < 250) poition = 'left:' + x + 'px;bottom:' + (pageSize.height - y) + 'px;';
+    var html = '<div id="rightMenu" style="position:fixed;' + poition +
+        'width:150px;background-color:#fff;box-shadow: 0px 0px 10px #666;border-radius: 10px;padding: 10px;cursor:pointer">';
+    for (var i in data.rightMenu) {
+        if (data.rightMenu[i].hidden) continue;//右键菜单中的隐藏项直接跳过
+        if (selectedEle != null && selectedEle.outerHTML.search('</h1>') !== -1) {//点击选中元素是标题
+            if (data.rightMenu[i].id === 'textcss' || data.rightMenu[i].id === 'cssstyle')
+                html += '<div type_id="' + data.rightMenu[i].id + '">' + data.rightMenu[i].text + '</div>';
+        } else if (selectedEle != null && selectedEle.outerHTML.search('<table') !== -1) {//点击选中的元素是一个表格
+            if (data.rightMenu[i].id === 'delform')
+                html += '<div type_id="' + data.rightMenu[i].id + '">' + data.rightMenu[i].text + '</div>';
+        } else
+            html += '<div type_id="' + data.rightMenu[i].id + '">' + data.rightMenu[i].text + '</div>';
+    }
+    html += '</div>';
+    $("body").append(html);
+    $('#rightMenu').bind("contextmenu", function () {
+        return false;
+    }).children('div').each(function () {
+        $(this).click(function () {
+            $('#rightMenu').remove();
+            optalert($(this).attr('type_id'));
+        });
+    });
+}
+
+/**
+ * 将string字符串转成json对象,自符串中，将 ; 转成 ','    将 : 转成 ':'
+ * @param str
+ */
+function strtojson(str) {
+    if (str == null) return {};
+    if (str.charAt(str.length - 1) === ';') str = str.substring(0, str.length - 1);
+    return eval('({\'' + str.replace(/\s/g, '').replace(/;/ig, '\',\'').replace(/:/ig, '\':\'') + '\'})');
+}
