@@ -19,6 +19,7 @@ public class Page_ele {
     private String textcss;//字体样式
     private String cssstyle;//内容样式
     private String ele_id;//页面元素id，只能是小写字母
+    private String calculate;//计算公式
     private List<Page_table> page_tables;
 
     public String getIdele() {
@@ -147,6 +148,14 @@ public class Page_ele {
 
     public void setEle_id(String ele_id) {
         this.ele_id = ele_id;
+    }
+
+    public String getCalculate() {
+        return calculate;
+    }
+
+    public void setCalculate(String calculate) {
+        this.calculate = calculate;
     }
 
     public List<Page_table> getPage_tables() {

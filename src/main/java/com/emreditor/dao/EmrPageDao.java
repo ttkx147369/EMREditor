@@ -3,6 +3,7 @@ package com.emreditor.dao;
 import com.emreditor.beans.Page;
 import com.emreditor.beans.Page_ele;
 import com.emreditor.beans.Page_table;
+import com.emreditor.beans.Page_table_ele;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -175,4 +176,39 @@ public interface EmrPageDao {
      */
     @SelectProvider(type = PageMapperProvider.class, method = "getTableCol")
     List<Page_table> getTableCol(Page_table page_table);
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////         表格td中的表单元素        /////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * 更新td中的元素信息
+     * @param page_table_ele 1
+     * @return 1
+     */
+    @UpdateProvider(type = PageMapperProvider.class, method = "updTableEle")
+    int updTableEle(Page_table_ele page_table_ele);
+
+    /**
+     * 新增td中的元素
+     * @param page_table_ele 1
+     * @return 1
+     */
+    @InsertProvider(type = PageMapperProvider.class, method = "insetTableEle")
+    int insetTableEle(Page_table_ele page_table_ele);
+
+    /**
+     * 条件查询td表中的元素
+     * @param page_table_ele 1
+     * @return 1
+     */
+    @SelectProvider(type = PageMapperProvider.class, method = "getTableEle")
+    List<Page_table_ele> getTableEle(Page_table_ele page_table_ele);
+
+    /**
+     * 删除td中的元素
+     * @param page_table_ele 1
+     * @return 1
+     */
+    @DeleteProvider(type = PageMapperProvider.class, method = "delTableTdEle")
+    int delTableTdEle(Page_table_ele page_table_ele);
 }

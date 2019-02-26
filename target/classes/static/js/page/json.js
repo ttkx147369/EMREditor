@@ -60,6 +60,7 @@ window['data'] = {
         },
         {id: 'occupy_col', text: '占用列', hidden: false, type: 'input', hint: '输入列数', value: {}},
         {id: 'occupy_row', text: '占用行', hidden: false, type: 'input', hint: '输入行数（只对textarea生效）', value: {}},
+        {id: 'calculate', text: '计算公式', hiddeng:false, type: 'input', hint: '点击编辑计算公式', value:{}},
         {id: 'show_seq', text: '显示顺序', hidden: true, type: 'input', hint: '', value: {}}
     ],
     //添加表格的数据
@@ -192,15 +193,16 @@ window['data'] = {
             type: 'textarea',
             hint: '下拉框，单选，多选框选择数据固定值，json格式，连接地址则为key，value',
             value: {}
-        }
+        },
+        {id: 'calculate', text: '计算公式', hidden: false, type: 'input', hint: '点击编辑计算公式，仅输入框有效', value: {}}
     ]
 };
 
 //页面元素右键菜单执行函数
 var menuFun = {
     addform: function (type, ele_id, title, ele_type) {
-        //showAlertEle(ele_type, type);
-        //$('#' + type).find("form").find("input[name=idele]").val('');
+        $("#"+type).find('input[name=idele]').val('');//清空主键信息，避免新增被当作修改处理
+        showAlertEle(ele_type, type);
         openalert(type, ele_id, title, ele_type);
     },
     addtable: function (type, ele_id, title, ele_type) {
@@ -289,14 +291,31 @@ window['tabledata'] = {
             }
         },
         {
-            id: 'tableFormEle', text: '表单元素', func: function () {
+            id: 'tableFormEle', text: '新增表单元素', func: function () {
                 var desc = '';
-                tableopenalert('tableFormEle');
+                tableopenalert('tableFormEle',function (formele) {
+                    formele[formele.length]={};
+                    formele[formele.length-1]['name']='page_table_id';
+                    formele[formele.length-1]['value']=tabledata.downElement.idtable;
+                    console.log(formele);
+                    $.ajax({
+                        url: '/dpage/insetTableEle',
+                        async: false,
+                        data: formele,
+                        success: function (res) {
+                            console.log(res);
+                            if (res * 1 > 0) window.location.reload();
+                            else layer.msg("保存失败");
+                        }
+                    })
+                });
                 $.ajax({
                     url: '/dpage/getTableCol',
                     async: false,
                     data: {idtable: tabledata.downElement.idtable,},
                     success: function (res) {
+                        courrentId=res[0].ele_id
+                        delete ids[courrentId];
                         form.val("tableFormEle", res[0]);
                     }
                 })
@@ -445,11 +464,13 @@ window['tabledata'] = {
         {
             id: 'textcss', text: '文字样式', func: function () {
                 tableopenalert('textcss');
+                updTableStyle('textcss');
             }
         },
         {
             id: 'cssstyle', text: 'css内容样式', func: function () {
                 tableopenalert('cssstyle');
+                updTableStyle('cssstyle');
             }
         }
     ],

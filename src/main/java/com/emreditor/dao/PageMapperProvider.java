@@ -3,11 +3,12 @@ package com.emreditor.dao;
 import com.emreditor.beans.Page;
 import com.emreditor.beans.Page_ele;
 import com.emreditor.beans.Page_table;
+import com.emreditor.beans.Page_table_ele;
 import org.apache.ibatis.jdbc.SQL;
 
 import java.util.Map;
 
-public class PageMapperProvider {
+public class PageMapperProvider extends SQL {
     /**
      * 生成查询语句
      *
@@ -24,7 +25,7 @@ public class PageMapperProvider {
                 if (page.getPage_type() != null && page.getPage_type().length() > 0)
                     WHERE("page_type = #{idpage}");
                 if (page.getPage_title() != null && page.getPage_title().length() > 0)
-                    WHERE("page_title like '%'||#{page_title}||'%'");
+                    WHERE("page_title like CONCAT('%',#{page_title},'%')");
             }
         }.toString();
     }
@@ -212,6 +213,8 @@ public class PageMapperProvider {
                     VALUES("label", "#{label}");
                 if (page_ele.getEle_id() != null && page_ele.getEle_id().length() > 0)
                     VALUES("ele_id", "#{ele_id}");
+                if (page_ele.getCalculate() != null && page_ele.getCalculate().length() > 0)
+                    VALUES("calculate","#{calculate}");
             }
         }.toString();
     }
@@ -255,6 +258,8 @@ public class PageMapperProvider {
                     SET("label=#{label}");
                 if (page_ele.getEle_id() != null && page_ele.getEle_id().length() > 0)
                     SET("ele_id=#{ele_id}");
+                if (page_ele.getCalculate() != null && page_ele.getCalculate().length() > 0)
+                    SET("calculate=#{calculate}");
                 WHERE("idele = #{idele}");
             }
         }.toString();
@@ -269,7 +274,38 @@ public class PageMapperProvider {
         return new SQL() {
             {
                 DELETE_FROM("page_ele");
-                WHERE("idele = #{idele}");
+                if (page_ele.getIdele() != null && page_ele.getIdele().length() > 0)
+                    WHERE("idele=#{idele}");
+                if (page_ele.getIdpage() != null && page_ele.getIdpage().length() > 0)
+                    WHERE("idpage=#{idpage}");
+                if (page_ele.getEle_type() != null && page_ele.getEle_type().length() > 0)
+                    WHERE("ele_type=#{ele_type}");
+                if (page_ele.getEle_conn() != null && page_ele.getEle_conn().length() > 0)
+                    WHERE("ele_conn=#{ele_conn}");
+                if (page_ele.getEle_value() != null && page_ele.getEle_value().length() > 0)
+                    WHERE("ele_value=#{ele_value}");
+                if (page_ele.getLimit_type() != null && page_ele.getLimit_type().length() > 0)
+                    WHERE("limit_type=#{limit_type}");
+                if (page_ele.getLimit_length() != null && page_ele.getLimit_length().length() > 0)
+                    WHERE("limit_length=#{limit_length}");
+                if (page_ele.getLimit_range() != null && page_ele.getLimit_range().length() > 0)
+                    WHERE("limit_range=#{limit_range}");
+                if (page_ele.getLimit_char() != null && page_ele.getLimit_char().length() > 0)
+                    WHERE("limit_char=#{limit_char}");
+                if (page_ele.getOccupy_col() != null && page_ele.getOccupy_col().length() > 0)
+                    WHERE("occupy_col=#{occupy_col}");
+                if (page_ele.getOccupy_row() != null && page_ele.getOccupy_row().length() > 0)
+                    WHERE("occupy_row=#{occupy_row}");
+                if (page_ele.getShow_seq() != null)
+                    WHERE("show_seq=#{show_seq}");
+                if (page_ele.getTextcss() != null && page_ele.getTextcss().length() > 0)
+                    WHERE("textcss=#{textcss}");
+                if (page_ele.getCssstyle() != null && page_ele.getCssstyle().length() > 0)
+                    WHERE("cssstyle=#{cssstyle}");
+                if (page_ele.getLabel() != null && page_ele.getLabel().length() > 0)
+                    WHERE("label=#{label}");
+                if (page_ele.getEle_id() != null && page_ele.getEle_id().length() > 0)
+                    WHERE("ele_id=#{ele_id}");
             }
         }.toString();
     }
@@ -361,7 +397,7 @@ public class PageMapperProvider {
     public String getPageTable(Page_table page_table) {
         return new SQL() {
             {
-                SELECT("idtable,idele,colspan,rowspan,label_type,showcontent,show_seq,tdrow,tdcol,textcss,cssstyle,ele_type,ele_id,ele_conn,ele_value");
+                SELECT("*");
                 FROM("page_table");
                 if (page_table.getIdtable() != null && page_table.getIdtable().length() > 0)
                     WHERE("idtable=#{idtable}");
@@ -495,39 +531,34 @@ public class PageMapperProvider {
 
     /**
      * 跟新table元素表相关信息
+     *
      * @param page_table 1
      * @return 1
      */
     public String updPageTable(Page_table page_table) {
-        return new SQL() {
-            {
-                UPDATE("page_table");
-                if (page_table.getShowcontent() != null && page_table.getShowcontent().length() > 0)
-                    SET("showcontent=#{showcontent}");
-                if (page_table.getCssstyle() != null && page_table.getCssstyle().length() > 0)
-                    SET("cssstyle=#{cssstyle}");
-                if (page_table.getTextcss() != null && page_table.getTextcss().length() > 0)
-                    SET("textcss=#{textcss}");
-                if (page_table.getEle_type() != null && page_table.getEle_type().length() > 0)
-                    SET("ele_type=#{ele_type}");
-                if (page_table.getEle_id() != null && page_table.getEle_id().length() > 0)
-                    SET("ele_id=#{ele_id}");
-                if (page_table.getEle_conn() != null && page_table.getEle_conn().length() > 0)
-                    SET("ele_conn=#{ele_conn}");
-                if (page_table.getEle_value() != null && page_table.getEle_value().length() > 0)
-                    SET("ele_value=#{ele_value}");
-                WHERE("idtable=#{idtable}");
-            }
-        }.toString();
+        /*return new SQL() {
+            {*/
+        UPDATE("page_table");
+        if (page_table.getShowcontent() != null && page_table.getShowcontent().length() > 0)
+            SET("showcontent=#{showcontent}");
+        if (page_table.getCssstyle() != null && page_table.getCssstyle().length() > 0)
+            SET("cssstyle=#{cssstyle}");
+        if (page_table.getTextcss() != null && page_table.getTextcss().length() > 0)
+            SET("textcss=#{textcss}");
+        WHERE("idtable=#{idtable}");
+         /*   }
+        }*/
+        return toString();
     }
 
     /**
      * 条件查询单元格信息
+     *
      * @param page_table 1
      * @return 1
      */
-    public String getTableCol(Page_table page_table){
-        return new SQL(){
+    public String getTableCol(Page_table page_table) {
+        return new SQL() {
             {
                 SELECT("*");
                 FROM("page_table");
@@ -553,15 +584,97 @@ public class PageMapperProvider {
                     WHERE("textcss=#{textcss}");
                 if (page_table.getCssstyle() != null && page_table.getCssstyle().length() > 0)
                     WHERE("cssstyle=#{cssstyle}");
-                if (page_table.getEle_type() != null && page_table.getEle_type().length() > 0)
-                    WHERE("ele_type=#{ele_type}");
-                if (page_table.getEle_id() != null && page_table.getEle_id().length() > 0)
-                    WHERE("ele_id=#{ele_id}");
-                if (page_table.getEle_conn() != null && page_table.getEle_conn().length() > 0)
-                    WHERE("ele_conn=#{ele_conn}");
-                if (page_table.getEle_value() != null && page_table.getEle_value().length() > 0)
-                    WHERE("ele_valuev#{ele_value}");
             }
         }.toString();
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////         表格td中的表单元素        /////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * 更新td中的元素信息
+     *
+     * @param page_table_ele 1
+     * @return 1
+     */
+    public String updTableEle(Page_table_ele page_table_ele) {
+        UPDATE("page_table_ele");
+        if (page_table_ele.getEle_type() != null && page_table_ele.getEle_type().length() > 0)
+            SET("ele_type=#{ele_type}");
+        if (page_table_ele.getEle_id() != null && page_table_ele.getEle_id().length() > 0)
+            SET("ele_id=#{ele_id}");
+        if (page_table_ele.getEle_conn() != null && page_table_ele.getEle_conn().length() > 0)
+            SET("ele_conn=#{ele_conn}");
+        if (page_table_ele.getEle_value() != null && page_table_ele.getEle_value().length() > 0)
+            SET("ele_valuev#{ele_value}");
+        if (page_table_ele.getCalculate() != null && page_table_ele.getCalculate().length() > 0)
+            SET("calculate=#{calculate}");
+        WHERE("idpage_table_ele=#{idpage_table_ele}");
+        return toString();
+    }
+
+    /**
+     * 新增td中的元素
+     *
+     * @param page_table_ele 1
+     * @return 1
+     */
+    public String insetTableEle(Page_table_ele page_table_ele) {
+        INSERT_INTO("page_table_ele");
+        if (page_table_ele.getIdpage_table_ele() != null && page_table_ele.getIdpage_table_ele().length() > 0)
+            VALUES("idpage_table_ele", "#{idpage_table_ele}");
+        if (page_table_ele.getPage_table_id() != null && page_table_ele.getPage_table_id().length() > 0)
+            VALUES("page_table_id", "#{page_table_id}");
+        if (page_table_ele.getEle_type() != null && page_table_ele.getEle_type().length() > 0)
+            VALUES("ele_type", "#{ele_type}");
+        if (page_table_ele.getEle_id() != null && page_table_ele.getEle_id().length() > 0)
+            VALUES("ele_id", "#{ele_id}");
+        if (page_table_ele.getEle_conn() != null && page_table_ele.getEle_conn().length() > 0)
+            VALUES("ele_conn", "#{ele_conn}");
+        if (page_table_ele.getEle_value() != null && page_table_ele.getEle_value().length() > 0)
+            VALUES("ele_value", "#{ele_value}");
+        if (page_table_ele.getCalculate() != null && page_table_ele.getCalculate().length() > 0)
+            VALUES("calculate","#{calculate}");
+        return toString();
+    }
+
+    /**
+     * 条件查询td表中的元素
+     *
+     * @param page_table_ele 1
+     * @return 1
+     */
+    public String getTableEle(Page_table_ele page_table_ele) {
+        SELECT("*");
+        FROM("page_table_ele");
+        if (page_table_ele.getIdpage_table_ele() != null && page_table_ele.getIdpage_table_ele().length() > 0)
+            WHERE("idpage_table_ele=#{idpage_table_ele}");
+        if (page_table_ele.getPage_table_id() != null && page_table_ele.getPage_table_id().length() > 0)
+            WHERE("page_table_id=#{page_table_id}");
+        if (page_table_ele.getEle_type() != null && page_table_ele.getEle_type().length() > 0)
+            WHERE("ele_type=#{ele_type}");
+        if (page_table_ele.getEle_id() != null && page_table_ele.getEle_id().length() > 0)
+            WHERE("ele_id=#{ele_id}");
+        if (page_table_ele.getEle_conn() != null && page_table_ele.getEle_conn().length() > 0)
+            WHERE("ele_conn=#{ele_conn}");
+        if (page_table_ele.getEle_value() != null && page_table_ele.getEle_value().length() > 0)
+            WHERE("ele_valuev={ele_value}");
+        ORDER_BY("seq");
+        return toString();
+    }
+
+    /**
+     * 删除td中的元素
+     *
+     * @param page_table_ele 1
+     * @return 1
+     */
+    public String delTableTdEle(Page_table_ele page_table_ele) {
+        DELETE_FROM("page_table_ele");
+        if (page_table_ele.getPage_table_id() != null && page_table_ele.getPage_table_id().length() > 0)
+            WHERE("page_table_id=#{page_table_id}");
+        if (page_table_ele.getIdpage_table_ele() != null && page_table_ele.getIdpage_table_ele().length() > 0)
+            WHERE("idpage_table_ele=#{idpage_table_ele}");
+        return toString();
     }
 }

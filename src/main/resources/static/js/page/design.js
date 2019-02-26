@@ -2,9 +2,11 @@
  * 普通的表单元素和表格是分开的，
  * 弹窗也是两个不同的方法体系
  */
+var courrentId=null;
 //被选中的元素
 var selectedEle = null;
-var pageSize = {width: document.documentElement.clientWidth, height: document.documentElement.clientHeight}
+var pageSize = {width: document.documentElement.clientWidth, height: document.documentElement.clientHeight};
+var preview=getQueryString("preview");//记录是否是设计预览
 //初始化layui插件
 var layer, form;
 layui.use(['layer', 'form'], function () {
@@ -14,8 +16,74 @@ layui.use(['layer', 'form'], function () {
     form.on('select(ele_type)', function (data) {
         showAlertEle(data.value, 'addform'); //得到被选中的值
     });
+    //添加计算公式输入框点击事件
+    $("input[name=calculate]").each(function () {
+        $(this).click(function () {
+            var THIS=this;
+            layer.open({
+                type: 1,
+                title: '计算公式',
+                area: ['1020px', '90%'],
+                content: '<div class="layui-form"><textarea id="calculate" class="layui-textarea" style="position: fixed;z-index: 1;width: 1000px;"></textarea>'
+                    +'<div style="height: 35px;"></div><div id="calculatecon">'+$("#optfile").find("form").html()+"</div></div>",
+                btn: ['确定', '取消'],
+                yes: function(index, layero){
+                    THIS.value=layero.find('textarea')[0].value;
+                },
+                btn2: function(index, layero){
+
+                }
+            });
+            var inputName;
+            $('#calculatecon').find('input').each(function(){
+                if(this.type!=='checkbox'){//没有多选，只有单选的情况下，当只有一个选项的时候选中了就取消不了，怎么处理
+                    if(inputName!==this.name) {
+                        $(this).parent().click(function () {
+                            calculateSelect($(this).find('input')[0])
+                        });
+                        inputName=this.name;
+                    }
+                }
+            });
+            $('#calculatecon').find('select').each(function () {
+                $(this).parent().click(function () {
+                    calculateSelect($(this).find('select')[0])
+                });
+            });
+            //textarea暂时不要
+            /*$('#calculatecon').find('textarea').each(function () {
+                $(this).parent().click(function () {
+                    calculateSelect($(this).find('textarea'))
+                });
+            });*/
+        });
+    });
+
+    /**
+     * 计算公式里面如果有括号再去掉其中一些元素可能会出错（还需要增加计算公式校验的功能）
+     * @param obj
+     */
+    function calculateSelect(obj) {
+        var c=$('#calculate').val();
+        var obj1=$(obj).parent();
+        if(obj1.hasClass('tdEleSel')){
+            var c1=c.split(obj.name);
+            if(/[\+\-\*\/]/.test(c1[0].charAt(c1[0].length-1)))
+                $('#calculate').val(c1[0].substring(0,c1[0].length-1)+c1[1]);
+            else
+                $('#calculate').val(c1[0]+c1[1].substring(1,c1[1].length));
+            obj1.removeClass('tdEleSel');
+        }else{
+            if(c===undefined||c==='') $('#calculate').val(obj.name);
+            else $('#calculate').val(c+'+'+obj.name);
+            obj1.addClass('tdEleSel');
+        }
+    }
 });
 $(function () {
+    if(preview==='true'||preview===true){
+        $('.tool-bar').hide();
+    }
     initpage(data.dataadd, 'addform');
     initpage(data.tableadd, 'addtable');
     initpage(data.textcss, 'textcss');
@@ -64,9 +132,9 @@ function showAlertEle(ele_type, type) {
     }
     var hiddenele = [];
     if (ele_type === '1' || ele_type === '2' || ele_type === '9') {
-        hiddenele = ['ele_id', 'ele_type', 'ele_conn', 'ele_value', 'limit_type', 'limit_length', 'limit_range', 'limit_char', 'occupy_col', 'occupy_row'];
+        hiddenele = ['ele_id', 'ele_type', 'ele_conn', 'ele_value', 'limit_type', 'limit_length', 'limit_range', 'limit_char', 'occupy_col', 'occupy_row', 'calculate'];
     } else if (ele_type === '4' || ele_type === '5' || ele_type === '6') {
-        hiddenele = ['limit_type', 'limit_length', 'limit_range', 'limit_char', 'occupy_col', 'occupy_row', 'show_seq'];
+        hiddenele = ['limit_type', 'limit_length', 'limit_range', 'limit_char', 'occupy_col', 'occupy_row', 'show_seq', 'calculate'];
         formobj.find('#divele_conn').removeAttr('required');
     } else if (ele_type === '3') {
         hiddenele = ['ele_value', 'occupy_col', 'occupy_row'];
@@ -76,7 +144,7 @@ function showAlertEle(ele_type, type) {
         formobj.find('#divlimit_range').removeAttr('required');
         formobj.find('#divlimit_char').removeAttr('required');
     } else if (ele_type === '7') {
-        hiddenele = ['ele_value', 'occupy_col', 'occupy_row'];
+        hiddenele = ['ele_value', 'occupy_col', 'occupy_row', 'calculate'];
         formobj.find('#divele_conn').removeAttr('required');
         formobj.find('#divlimit_type').removeAttr('required');
         formobj.find('#divlimit_length').removeAttr('required');
@@ -85,6 +153,7 @@ function showAlertEle(ele_type, type) {
         formobj.find('#divoccupy_col').removeAttr('required');
         formobj.find('#divoccupy_row').removeAttr('required');
     }
+    formobj.find('#divcalculate').removeAttr("required");
     for (var i = 0, len = hiddenele.length; i < len; i++) {
         formobj.find('#div' + hiddenele[i]).hide().removeAttr('required');
     }
@@ -118,7 +187,15 @@ function openalert(type, ele_id, title, ele_type) {
             if (!required(value, type, ele_type)) return;
             //如果是文字样式或css样式需要单独处理数据
             if (type === 'textcss' || type === 'cssstyle') value = clickOpenSure(value, type);
-
+            //判断元素id是否重复
+            for (var i = 0, len = value.length; i < len; i++) {
+                if (value[i].name === 'ele_id') {
+                    if (ids[value[i].value] === true) {
+                        layer.alert("元素id重复，需重新输入");
+                        return false;
+                    }
+                }
+            }
             if (ele_type === '1' || ele_type === '2' || ele_type === '9')
                 for (var i = 0, len = value.length; i < len; i++) {
                     if (value[i].name !== 'ele_type') {
@@ -127,6 +204,7 @@ function openalert(type, ele_id, title, ele_type) {
                     value[i].value = ele_type;
                     break;
                 }
+
             //提交保存数据，如果成功则刷新页面
             $.ajax({
                 url: url,
@@ -144,7 +222,7 @@ function openalert(type, ele_id, title, ele_type) {
             });
         },
         btn2: function (index, layero) {
-
+            ids[courrentId]=true;
         }
     });
 }
@@ -230,6 +308,8 @@ function updDataShow(type, ele_id) {
             formobj.find('input[name=idele]').val(res[0]['idele']);//当前eleid
             formobj.find('input[name=idpage]').val(res[0]['idpage']);//当前病历模板id
             form.render(null, type);
+            courrentId=res[0].ele_id;
+            delete ids[courrentId]
         },
         error: function (res) {
             console.log(res)
@@ -318,6 +398,8 @@ function initdata() {
         success: function (res) {
             $('#optfile').append('<h1 style="' + (res[0].textcss == null ? '' : res[0].textcss) + (res[0].cssstyle == null ? '' : res[0].cssstyle) + '" data_id="">' +
                 res[0].page_title + '</h1>');//title样式不能修改么？？？
+
+            if(preview==='true'||preview===true) return;
             $('#optfile').children('h1').mousedown(function () {
                 $(selectedEle).removeClass('selected');
                 selectedEle = this;
@@ -338,6 +420,7 @@ function initdata() {
         type: "POST",
         success: function (res) {
             $('#optfile').find('h1').after(makePageEle(res));
+            if(preview==='true'||preview===true) return;
             $('#optfile').find('form').children('div').each(function () {
                 $(this).mousedown(function (e) {
                     $(selectedEle).removeClass('selected');
@@ -350,7 +433,7 @@ function initdata() {
                     drop: function (event, ui) {
                         var oldseq = $(selectedEle).attr('ele_seq');
                         var newseq = $(this).attr('ele_seq');
-                        if (oldseq * 1 == newseq * 1) return;
+                        if (oldseq * 1 === newseq * 1) return;
                         $.ajax({
                             url: '/dpage/updseq',
                             async: false,
@@ -385,6 +468,7 @@ function initdata() {
  * @param y
  */
 function srightMenu(x, y) {
+    if(preview==='true'||preview===true) return;
     var poition = 'left:' + x + 'px;top:' + y + 'px;';
     if(pageSize.height - y < 250) poition = 'left:' + x + 'px;bottom:' + (pageSize.height - y) + 'px;';
     var html = '<div id="rightMenu" style="position:fixed;' + poition +

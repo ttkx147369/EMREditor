@@ -10,12 +10,6 @@ public class Page implements java.io.Serializable {
     private static final long serialVersionUID = 1L;
 
     private String idpage;
-    private String pagecol5;
-    private String pagecol4;
-    private String pagecol3;
-    private String pagecol2;
-    private String pagecol1;
-    private String pagecol;
     private Date page_update;
     private String page_type;
     private String page_title;
@@ -23,6 +17,12 @@ public class Page implements java.io.Serializable {
     private String page_backimg;
     private String textcss;//字体样式
     private String cssstyle;//内容样式
+    private String pagecol5;
+    private String pagecol4;
+    private String pagecol3;
+    private String pagecol2;
+    private String pagecol1;
+    private String pagecol;
 
     public String getIdpage() {
         return idpage;

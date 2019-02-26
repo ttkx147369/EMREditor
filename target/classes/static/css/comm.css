@@ -4,3 +4,6 @@
 h1{
     text-align: center;
 }
+.layui-form-radio {
+    margin: 0;
+}

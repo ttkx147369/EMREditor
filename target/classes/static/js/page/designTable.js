@@ -7,6 +7,10 @@ function opttable() {
         $(this).mousedown(function (e) {//鼠标按键按下
             $("#rightMenu").remove();
             if (3 === e.which) {//右键为3
+                if (tabledata.downElement == null) {
+                    layer.msg("请先左键选择元素");
+                    return false;
+                }
                 tdRightMenu(e);
             } else if (1 === e.which) { //左键为1
                 //清空之前选中的元素
@@ -86,15 +90,45 @@ function opttable() {
                 tabledata.previousElement = null;//鼠标松开时需要将上一个表格对象清空
                 tabledata.opt = false;
             }
+        }).children('span').each(function () {
+            var THIS=this;
+            $(this).children("span").children('i').each(function (index, ele) {
+                $(this).click(function () {
+                    if (index === 0) {
+                        $.ajax({
+                            url: '/dpage/delTableTdEle',//对同一个表的不同字段修改，可以直接就用一个接口
+                            async: true,
+                            data: {idpage_table_ele:$(THIS).attr("ele_id")},
+                            type: "POST",
+                            success: function (res) {
+                                console.log(res);
+                                if (res * 1 > 0) window.location.reload();
+                                else layer.msg("保存失败");
+                            },
+                            error: function (res) {
+                                console.log(res)
+                            }
+                        })
+                    } else {
+                        //修改
+                    }
+                });
+            });
+            $(this).mouseover(function (e) {
+                $(this).addClass("tdEleSel").children("span").css('visibility', 'visible');
+            }).mouseout(function () {
+                $(this).removeClass("tdEleSel").children("span").css('visibility', 'hidden');
+            });
         });
     });
 }
 
 /**
  * 表格td中点击右键或菜单栏的弹出窗体
- * @param type
+ * @param type 弹窗类型
+ * @param func 点击弹窗中确定按钮的执行函数，包含一个参数，用户填写的form表单元素及值的数组对象
  */
-function tableopenalert(type) {
+function tableopenalert(type,func) {
     var formobj = $('#' + type).find("form");
     clearform(type);//先将对应表单中的数据清空
     var tableTitle = '';
@@ -111,6 +145,10 @@ function tableopenalert(type) {
         btn: ['确定', '取消'],
         yes: function () {
             var value = formobj.serializeArray();
+            if(func){
+                func(formobj.serializeArray());
+                return true;
+            }
             if (type === 'addform')
                 if (!required(value, type, ele_type)) return;
             //如果是文字样式或css样式需要单独处理数据
@@ -119,7 +157,7 @@ function tableopenalert(type) {
             else {//添加的内容
 
             }
-            //idele showcontent textcss cssstyle
+            //idele showcontent textcss cssstyle calculate
             value[value.length] = {name: 'idtable', value: tabledata.downElement.idtable};
             //提交保存数据，如果成功则刷新页面
             $.ajax({
@@ -138,7 +176,7 @@ function tableopenalert(type) {
             });
         },
         btn2: function (index, layero) {
-
+            ids[courrentId] = true;
         }
     });
 }
@@ -208,7 +246,6 @@ function option(obj) {
  * @param e
  */
 function tdRightMenu(e) {
-
     var poition = 'left:' + e.clientX + 'px;top:' + e.clientY + 'px;';
     if (pageSize.height - e.clientY < 250) poition = 'left:' + e.clientX + 'px;bottom:' + (pageSize.height - e.clientY) + 'px;';
     var html = '<div id="rightMenu" style="position:fixed;' + poition +
@@ -230,4 +267,26 @@ function tdRightMenu(e) {
             }
         });
     });
+}
+
+/**
+ * 打开单元格样式弹窗是回填数据
+ */
+function updTableStyle(type) {
+    var formobj = $('#' + type).find("form");
+    $.ajax({
+        url: '/dpage/getTableCol',
+        async: true,
+        data: {idtable: tabledata.downElement.idtable},
+        type: "POST",
+        success: function (res) {
+            form.val(type, strtojson(res[0][type]));
+            formobj.find('input[name=idtable]').val(res[0]['idtable']);
+            formobj.find('input[name=idele]').val(res[0]['idele']);
+        },
+        error: function (res) {
+            console.log(res)
+        }
+    });
+
 }

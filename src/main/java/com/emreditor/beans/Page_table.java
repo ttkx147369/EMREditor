@@ -1,5 +1,7 @@
 package com.emreditor.beans;
 
+import java.util.List;
+
 public class Page_table {
     private String idtable;//主键
     private String idele;//page_ele表主键
@@ -12,10 +14,11 @@ public class Page_table {
     private Integer tdcol;//一行中的第几列
     private String textcss;//td的文本样式
     private String cssstyle;//td的css样式
-    private String ele_type;//页面元素类型（1：分类标题，2：label，3：输入框，4：下拉框，5：单选框，6：多选框，7：文本域，8：文件上传，9：说明性文字）
-    private String ele_id;//页面元素id，只能是小写字母
-    private String ele_conn;//下拉框，单选，多选框选择数据来源接口
-    private String ele_value;//下拉框，单选，多选框选择数据固定值，json类型{key:value,key1:value1}
+    private List<Page_table_ele> tableEle;//表格中td的元素
+    //private String ele_type;//页面元素类型（1：分类标题，2：label，3：输入框，4：下拉框，5：单选框，6：多选框，7：文本域，8：文件上传，9：说明性文字）
+    //private String ele_id;//页面元素id，只能是小写字母
+    //private String ele_conn;//下拉框，单选，多选框选择数据来源接口
+    //private String ele_value;//下拉框，单选，多选框选择数据固定值，json类型{key:value,key1:value1}
 
 
     public String getIdtable() {
@@ -106,6 +109,14 @@ public class Page_table {
         this.cssstyle = cssstyle;
     }
 
+    public List<Page_table_ele> getTableEle() {
+        return tableEle;
+    }
+
+    public void setTableEle(List<Page_table_ele> tableEle) {
+        this.tableEle = tableEle;
+    }
+/*
     public String getEle_type() {
         return ele_type;
     }
@@ -136,5 +147,5 @@ public class Page_table {
 
     public void setEle_value(String ele_value) {
         this.ele_value = ele_value;
-    }
+    }*/
 }

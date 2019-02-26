@@ -3,6 +3,7 @@ package com.emreditor.controller;
 import com.emreditor.beans.Page;
 import com.emreditor.beans.Page_ele;
 import com.emreditor.beans.Page_table;
+import com.emreditor.beans.Page_table_ele;
 import com.emreditor.service.EmrPageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,14 +29,19 @@ public class EmrDPageController {
      * 向病历主表添加记录(记录更新暂时不可用)
      */
     @RequestMapping("addpAddData")
-    public int addpAddData(Page page) {
-        if (page.getIdpage() == null || page.getIdpage().length() == 0) {
-            page.setIdpage(UUID.randomUUID().toString());
+    public String addpAddData(Page page) {
+    	String id=page.getIdpage();
+        if (id == null || id.length() == 0) {
+        	id=UUID.randomUUID().toString();
+            page.setIdpage(id);
             page.setPage_create(new Date());
-            return emrPageService.addDbType(page);
+            emrPageService.addDbType(page);
+            return id;
         } else {
             page.setPage_update(new Date());
-            return emrPageService.updDbType(page);
+            int res = emrPageService.updDbType(page);
+            if(res == 0) emrPageService.addDbType(page);
+            return id;
         }
     }
 
@@ -183,5 +189,19 @@ public class EmrDPageController {
     @RequestMapping("getTableCol")
     public List<Page_table> getTableCol(Page_table page_table){
         return emrPageService.getTableCol(page_table);
+    }
+
+    /**
+     * 删除表格td中的表单元素
+     * @param page_table_ele 1
+     * @return 1
+     */
+    @RequestMapping("delTableTdEle")
+    public int delTableTdEle(Page_table_ele page_table_ele){
+        return emrPageService.delTableTdEle(page_table_ele);
+    }
+    @RequestMapping("insetTableEle")
+    public int insetTableEle(Page_table_ele page_table_ele){
+        return emrPageService.insetTableEle(page_table_ele);
     }
 }

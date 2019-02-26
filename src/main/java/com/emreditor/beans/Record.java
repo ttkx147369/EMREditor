@@ -1,12 +1,15 @@
 package com.emreditor.beans;
 
+import java.util.Date;
+
 public class Record {
     private String idpage;//页面配置主表id
     private String idrecord;//主键
     private String page_backimg;//病历背景图，不重复，居左上角显示
-    private String record_create;//创建时间
+    private Date record_create;//创建时间
     private String record_title;//标题
-    private String record_update;//修改时间
+    private Date record_update;//修改时间
+    private String record_state;//记录状态（-1：新建未填写，0：填写只保存未提交，1：提交）
     private String recordcol;//备用
     private String recordcol1;//备用
     private String recordcol2;//备用
@@ -38,11 +41,11 @@ public class Record {
         this.page_backimg = page_backimg;
     }
 
-    public String getRecord_create() {
+    public Date getRecord_create() {
         return record_create;
     }
 
-    public void setRecord_create(String record_create) {
+    public void setRecord_create(Date record_create) {
         this.record_create = record_create;
     }
 
@@ -54,12 +57,20 @@ public class Record {
         this.record_title = record_title;
     }
 
-    public String getRecord_update() {
+    public Date getRecord_update() {
         return record_update;
     }
 
-    public void setRecord_update(String record_update) {
+    public void setRecord_update(Date record_update) {
         this.record_update = record_update;
+    }
+
+    public String getRecord_state() {
+        return record_state;
+    }
+
+    public void setRecord_state(String record_state) {
+        this.record_state = record_state;
     }
 
     public String getRecordcol() {

@@ -19,3 +19,9 @@
     min-height: 50px;
     padding: 0px;
 }
+.tdEleSel{
+    box-shadow: 0px 0px 10px #FFB800;
+}
+.calculateSelect{
+    background-color: #FFB800;
+}
