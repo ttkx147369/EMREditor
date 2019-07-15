@@ -4,13 +4,36 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <link rel="stylesheet" type="text/css" href="/css/comm.css">
-
+    <link rel="stylesheet" href="/layui/css/layui.css">
+    <script type="text/javascript" src="/layui/layui.js"></script>
+    <script type="text/javascript" src="/js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="/js/jquery-ui.min.js"></script>
 </head>
 <body>
-<form action="/dpage/addpAddData" method="post">
+<form class="layui-form" action="/dpage/addpAddData" method="post">
+    <div style="font-size:25px;font-weight:900;margin: 10px;text-align: center">
+        新建编辑器模板
+    </div>
+    <div style="height: 10px;"></div>
     <div class="hidden"><label>主键：</label><input name="idpage" type="text" value=""></div>
-    <div><label>标题：</label><input name="page_title" type="text" value=""></div>
-    <div><label>页面类型：</label><select name="page_type"><option value="1">信息展示</option><option value="2">表单填写</option></select></div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">标题：</label>
+        <div class="layui-input-block">
+            <input class="layui-input" name="page_title" type="text" value="">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">页面类型：</label>
+        <div class="layui-input-block">
+            <select name="page_type" class="layui-input layui-unselect">
+                <option value=""></option>
+                <option value="1">信息展示页，不包含表单字段</option>
+                <option value="2">普通表单填写页面，不包含任何计算和评估结果</option>
+                <option value="3">简单评估表单页面（包含计算公式），结果包含在表单项中</option>
+                <option value="4">复杂评估表单页面，包含多个结果，评估结果包含非表单项内容</option>
+            </select>
+        </div>
+    </div>
     <!--<div class="hidden"><label>创建时间：</label><input name="page_create" type="text" value=""></div>
     <div class="hidden"><label>修改时间：</label><input name="page_update" type="text" value=""></div>-->
     <div class="hidden"><label>备用：</label><input name="pagecol" type="text" value=""></div>
@@ -19,7 +42,18 @@
     <div class="hidden"><label>备用3：</label><input name="pagecol3" type="text" value=""></div>
     <div class="hidden"><label>备用4：</label><input name="pagecol4" type="text" value=""></div>
     <div class="hidden"><label>备用5：</label><input name="pagecol5" type="text" value=""></div>
-    <div><input type="submit" value="保存"></div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
 </form>
 </body>
+<script type="text/javascript">
+    layui.use(['layer', 'form'], function () {
+        layer = layui.layer;
+        form = layui.form;
+    });
+</script>
 </html>

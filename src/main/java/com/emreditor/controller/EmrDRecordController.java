@@ -1,7 +1,7 @@
 package com.emreditor.controller;
 
 import com.emreditor.beans.Record;
-import com.emreditor.beans.RecordValue;
+import com.emreditor.beans.RecordResult;
 import com.emreditor.service.EmrRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -57,12 +57,12 @@ public class EmrDRecordController {
     /**
      * 条件查询详情记录表
      *
-     * @param recordValue 1
+     * @param request 1
      * @return 1
      */
     @RequestMapping("getRecordValue")
-    public List<RecordValue> getRecordValue(RecordValue recordValue) {
-        return emrRecordService.getRecordValue(recordValue);
+    public List<Map<String, Object>> getRecordValue(HttpServletRequest request) {
+        return emrRecordService.getRecordValue(request);
     }
 
     /**
@@ -76,14 +76,28 @@ public class EmrDRecordController {
         return emrRecordService.deleterecord(record);
     }
 
+
+    //////////////////////////////////////////
+    /////////////以下没有适用///////////////////
+    //////////////////////////////////////////
     /**
      * 获取记录表中某一次记录的其中一些参数
      *
      * @param request names:需要获取值的多个name属性值，英文逗号分隔；idrecord：记录主表主键
      * @return 1
      */
-    @RequestMapping("getPartRecordValue")
+    /*@RequestMapping("getPartRecordValue")
     public List<Map<String, Object>> getPartRecordValue(HttpServletRequest request) {
         return emrRecordService.getPartRecordValue(request);
+    }*/
+
+    @RequestMapping("saveRecordValue")
+    public int saveRecordValue(RecordResult recordResult){
+        return emrRecordService.saveRecordValue(recordResult);
+    }
+
+    @RequestMapping("getRecordResult")
+    public List<RecordResult> getRecordResult(RecordResult recordResult){
+        return emrRecordService.getRecordResult(recordResult);
     }
 }

@@ -17,7 +17,7 @@ $(function () {
                 str += '<td>' + res[i].recordcol4 + '</td><td>' + res[i].recordcol5 + '</td>';
                 str += '<td>';
                 str += '<button class="layui-btn layui-btn-xs layui-btn-warm" idpage="' + res[i].idpage + '" idrecord="' + res[i].idrecord + '">查看</button>';
-                str += '<button'+(res[i].record_state!=='1'?'':' style="display: none;"')+' class="layui-btn layui-btn-xs" idpage="' + res[i].idpage + '" idrecord="' + res[i].idrecord + '">修改</button>';
+                str += '<button' + (res[i].record_state !== '1' ? '' : ' style="display: none;"') + ' class="layui-btn layui-btn-xs" idpage="' + res[i].idpage + '" idrecord="' + res[i].idrecord + '">修改</button>';
                 str += '<button class="layui-btn layui-btn-xs layui-btn-danger" idpage="' + res[i].idpage + '" idrecord="' + res[i].idrecord + '">删除</button>';
                 str += '</tr>';
             }

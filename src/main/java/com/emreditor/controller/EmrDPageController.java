@@ -34,13 +34,12 @@ public class EmrDPageController {
         if (id == null || id.length() == 0) {
         	id=UUID.randomUUID().toString();
             page.setIdpage(id);
-            page.setPage_create(new Date());
-            emrPageService.addDbType(page);
+            emrPageService.getDbType(page);
             return id;
         } else {
             page.setPage_update(new Date());
             int res = emrPageService.updDbType(page);
-            if(res == 0) emrPageService.addDbType(page);
+            //if(res == 0) emrPageService.addDbType(page);
             return id;
         }
     }
@@ -119,6 +118,41 @@ public class EmrDPageController {
         return emrPageService.updseq(map);
     }
 
+    /**
+     * 在模板编辑完成之后点击保存按钮
+     * 将新建一个以模板id为名称的表
+     * 以模板中的所有表单元素name为列名的表
+     * 用于保存数据
+     * @param page_ele 1
+     * @return 1
+     */
+    @RequestMapping("savePage")
+    public int savePage(Page_ele page_ele){
+        return emrPageService.savePage(page_ele);
+    }
+
+    /**
+     * 保存比纳基模板的时候增加page_type==4的评估结果保存列和条件
+     * @param request 1
+     * @return 1
+     */
+    @RequestMapping("saveCondition")
+    public int saveCondition(HttpServletRequest request){
+        String col=request.getParameter("col");
+        String row=request.getParameter("row");
+        String idpage=request.getParameter("idpage");
+        return emrPageService.saveCondition(col, row, idpage);
+    }
+
+    /**
+     * 根据idpage查询整个评估表中的所有表单元素name值
+     * @param request
+     * @return
+     */
+    @RequestMapping("getFormEleName")
+    public List<Map> getFormEleName(HttpServletRequest request){
+        return emrPageService.getFormEleName(request);
+    }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////         表格操作部分        //////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,7 +211,7 @@ public class EmrDPageController {
      * @return 1
      */
     @RequestMapping("updPageTable")
-    public  int updPageTable(Page_table page_table){
+    public int updPageTable(Page_table page_table){
         return emrPageService.updPageTable(page_table);
     }
 
@@ -197,11 +231,11 @@ public class EmrDPageController {
      * @return 1
      */
     @RequestMapping("delTableTdEle")
-    public int delTableTdEle(Page_table_ele page_table_ele){
-        return emrPageService.delTableTdEle(page_table_ele);
+    public int delTableTdEle(Page_table page_table, Page_table_ele page_table_ele){
+        return emrPageService.delTableTdEle(page_table, page_table_ele);
     }
     @RequestMapping("insetTableEle")
-    public int insetTableEle(Page_table_ele page_table_ele){
-        return emrPageService.insetTableEle(page_table_ele);
+    public int insetTableEle(Page_table page_table,Page_table_ele page_table_ele){
+        return emrPageService.insetTableEle(page_table, page_table_ele);
     }
 }

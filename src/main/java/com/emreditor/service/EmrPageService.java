@@ -24,13 +24,39 @@ public class EmrPageService {
     }
 
     /**
-     * 条件查询
+     * 条件查询(如果查出数据为空则新增一条记录)
      *
      * @param page 1
      * @return 1
      */
     public List<Page> getDbType(Page page) {
-        return emrPageDao.getDbType(page);
+        List<Page> pageList=emrPageDao.getDbType(page);
+        if(pageList!=null&&!pageList.isEmpty()) return pageList;
+        page.setPage_create(new Date());
+        //page.setPage_type("2");
+        if(addDbType(page)>0){
+            //如果是复杂评估页面，需要初始化一个表格
+            if("4".equals(page.getPage_type())){
+                String idpage=page.getIdpage();
+                Page_ele page_ele=new Page_ele();
+                page_ele.setIdele(idpage);
+                page_ele.setIdpage(idpage);
+                page_ele.setEle_type("10");
+                page_ele.setOccupy_col("1");
+                page_ele.setOccupy_row("1");
+                page_ele.setShow_seq(0);
+                page_ele.setTextcss("1");
+                int res=addPageEle(page_ele);
+                if(res>0){
+                    createTableRowCol("6", "10", idpage);
+                }
+            }
+
+            page.setPage_type(null);
+            page.setPage_create(null);
+            pageList=emrPageDao.getDbType(page);
+        }
+        return pageList;
     }
 
     /**
@@ -76,6 +102,8 @@ public class EmrPageService {
         }
         //删除ele数据
         emrPageDao.delPageEle(page_ele);
+        //删除当前模板对应的数据库表
+        emrPageDao.dropTable(page.getIdpage());
         //删除主表数据
         return emrPageDao.delPageData(page);
     }
@@ -95,7 +123,7 @@ public class EmrPageService {
                 if (ele_conn != null && ele_conn.length() > 0) {
                     list.get(i).setEle_conn(sendGet(ele_conn, null));
                 }
-                //判断是不是表格，对表格进行对应的操作，主要查询表格tdd中表单元素的值
+                //判断是不是表格，对表格进行对应的操作，主要查询表格td中表单元素的值
                 if (!"10".equals(p.getEle_type())) continue;
                 //查询表格操作
                 Page_table pt = new Page_table();
@@ -162,6 +190,90 @@ public class EmrPageService {
         return emrPageDao.updseq1(map);
     }
 
+    /**
+     * 在模板编辑完成之后点击保存按钮
+     * 将新建一个以模板id为名称的表
+     * 以模板中的所有表单元素name为列名的表
+     * 用于保存数据
+     * @param page_ele 1
+     * @return 1
+     */
+    public int savePage(Page_ele page_ele) {
+        int res = 0;
+        List<String> ele_id=new ArrayList<>();
+        List<Page_ele> list = emrPageDao.getPageEle(page_ele);
+        if (page_ele.getIdele() == null)
+            for (int i = 0, len = list.size(); i < len; i++) {
+                Page_ele p = list.get(i);
+                String ele_type=p.getEle_type();
+                if("3".equals(ele_type)||"4".equals(ele_type)||"5".equals(ele_type)||"6".equals(ele_type)||"7".equals(ele_type)){
+                    ele_id.add(p.getEle_id());
+                }
+                if (!"10".equals(p.getEle_type())) continue;
+                //查询表格操作
+                Page_table pt = new Page_table();
+                pt.setIdele(p.getIdele());
+                List<Page_table_ele> page_table_eles=emrPageDao.getTableEleByPageid(p);
+                for(int j = 0, le=page_table_eles.size(); j<le;j++){
+                    Page_table_ele tableEle = page_table_eles.get(j);
+                    String tele_type=tableEle.getEle_type();
+                    if("3".equals(tele_type)||"4".equals(tele_type)||"5".equals(tele_type)||"6".equals(tele_type)||"7".equals(tele_type)){
+                        if(tableEle.getEle_id()==null) continue;
+                        ele_id.add(tableEle.getEle_id());
+                    }
+                }
+            }
+        if(emrPageDao.getEmrTable(page_ele)>0){//表存在，只需要添加不存在的字段
+            List<String> column=emrPageDao.getEmrTableColumn(page_ele);
+            for(String str:column){
+                ele_id.remove(str);
+            }
+            if(!ele_id.isEmpty())
+                res=emrPageDao.alterTable(page_ele,ele_id);
+        }else{//表不存在需要重新创建表
+            res=emrPageDao.createTable(page_ele,ele_id);
+        }
+        return res;
+    }
+
+    /**
+     * 保存比纳基模板的时候增加page_type==4的评估结果保存列和条件
+     * @param col 1  ,
+     * @param row 1  , ~
+     * @param idpage 1
+     * @return 1
+     */
+    public int saveCondition(String col, String row, String idpage) {
+        Map<String, String> map=new HashMap<>();
+        col=col.length()==0?"-1":col;
+        map.put("idpage", idpage);
+        map.put("cols", col);
+        int res=emrPageDao.setVlaueColumn(map);
+        String[] rows=row.split(",");
+
+        //List<Page_table> page_tables=new ArrayList<>();
+        for(int i=0,len=rows.length;i<len;i++){
+            Page_table page_table=new Page_table();
+            String[] rc=rows[i].split("~");
+            if(rc[0].length()==0) continue;
+            page_table.setTdrow(Integer.parseInt(rc[0]));
+            page_table.setCondition(rc[1]);
+            page_table.setIdele(idpage);
+            res=emrPageDao.setConditionRow(page_table);
+            //page_tables.add(page_table);
+        }
+        return res;
+    }
+    /**
+     * 根据idpage查询整个评估表中的所有表单元素name值
+     * @param request 1
+     * @return 1
+     */
+    public List<Map> getFormEleName(HttpServletRequest request) {
+        Page page=new Page();
+        page.setIdpage(request.getParameter("idpage"));
+        return emrPageDao.getFormEleName(page);
+    }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////         表格操作部分        //////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -234,11 +346,18 @@ public class EmrPageService {
         map.put("idele", request.getParameter("idele"));
         map.put("ecol", request.getParameter("ecol"));
         map.put("erow", request.getParameter("erow"));
-        int res = emrPageDao.tdMergeDelTd(map);
+        map.put("formid", request.getParameter("formid"));
+        map.put("showcontent", request.getParameter("showcontent"));
+        int res = emrPageDao.tdMergeTd(map);
+
         if (res > 0) {
             map.put("col", request.getParameter("col"));
             map.put("row", request.getParameter("row"));
             res = emrPageDao.tdMergeUpdTd(map);
+
+            map.put("downtdid", request.getParameter("downtdid"));
+            emrPageDao.delTableTdEleByRowCol(map);
+            emrPageDao.updTableTdEleByRowCol(map);
         }
         return res;
     }
@@ -249,20 +368,21 @@ public class EmrPageService {
      * @param request 1
      */
     public int tdBreak(HttpServletRequest request) {
-        int row = Integer.parseInt(request.getParameter("row"));//开始行
-        int col = Integer.parseInt(request.getParameter("col"));//开始列
-        String idele = request.getParameter("idele");//当前表格在元素表中的元素id
-        String idtable = request.getParameter("idtable");//当前单元格记录id
-        int rowspan = Integer.parseInt(request.getParameter("rowspan"));//合并行数
-        int colspan = Integer.parseInt(request.getParameter("colspan"));//合并列数
-        for (int i = 0; i < rowspan; i++) {
-            for (int j = 0; j < colspan; j++) {
-                emrPageDao.createTableRowCol(initPage_table(idele, "td", -1, row + i, col + j));
-            }
-        }
-        Page_table page_table = new Page_table();
-        page_table.setIdtable(idtable);
-        return emrPageDao.delPageTable(page_table);
+        Map<String, String> map=new HashMap<>();
+        map.put("row", request.getParameter("row"));//开始行
+        map.put("col", request.getParameter("col"));//开始列
+        map.put("idele", request.getParameter("idele"));//当前表格在元素表中的元素id
+        //map.put("", "idtable");//当前单元格记录id
+        map.put("rowspan", request.getParameter("rowspan"));//合并行数
+        map.put("colspan", request.getParameter("colspan"));//合并列数
+        int res = emrPageDao.tdBreakTd(map);
+        if(res==0) return res;
+        Page_table page_table=new Page_table();
+        page_table.setIdtable(request.getParameter("idtable"));
+        page_table.setShowcontent(request.getParameter("showcontent"));
+        if(page_table.getShowcontent()!=null&&page_table.getShowcontent().length()>0)
+            emrPageDao.updPageTable(page_table);
+        return res;
     }
 
     /**
@@ -321,7 +441,15 @@ public class EmrPageService {
      * @return 1
      */
     public int updPageTable(Page_table page_table) {
-        return emrPageDao.updPageTable(page_table);
+        int res=0;
+        if(page_table.getColspan()==null||page_table.getRowspan()==null){
+            res=emrPageDao.updPageTable(page_table);
+        }else if(page_table.getColspan()==1&&page_table.getRowspan()==1)
+            res=emrPageDao.updPageTable(page_table);
+        else {
+            res=emrPageDao.updPageTableTds(page_table);
+        }
+        return res;
     }
 
     /**
@@ -340,12 +468,25 @@ public class EmrPageService {
      * @param page_table_ele 1
      * @return 1
      */
-    public int delTableTdEle(Page_table_ele page_table_ele) {
-        return emrPageDao.delTableTdEle(page_table_ele);
+    public int delTableTdEle(Page_table page_table, Page_table_ele page_table_ele) {
+        int res=emrPageDao.delTableTdEle(page_table_ele);
+        if(res>0&&page_table.getColspan()>1||page_table.getRowspan()>1)
+            emrPageDao.updPageTableTdFormid(page_table);
+        return res;
     }
 
-    public int insetTableEle(Page_table_ele page_table_ele) {
+    /**
+     * 插入td中的表单元素
+    * @param page_table 1
+     * @param page_table_ele 1
+     * @return 1
+     */
+    public int insetTableEle(Page_table page_table, Page_table_ele page_table_ele) {
         page_table_ele.setIdpage_table_ele(UUID.randomUUID().toString());
-        return emrPageDao.insetTableEle(page_table_ele);
+        int res=emrPageDao.insetTableEle(page_table_ele);
+        //if(res>0&&page_table.getColspan()>1||page_table.getRowspan()>1)
+        if(res>0)
+            emrPageDao.updPageTableTdFormid(page_table);
+        return res;
     }
 }

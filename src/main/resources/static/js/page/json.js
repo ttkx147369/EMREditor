@@ -16,6 +16,7 @@ window['data'] = {
             value: {}
         },
         {id: 'label', text: '显示文字', hidden: false, type: 'input', hint: '输入需要显示的文字', value: {}},
+        {id: 'textarea', text: '显示文字', hidden: false, type: 'textarea', hint: '输入需要显示的文字', value: {}},
         {id: 'ele_id', text: '元素id', hidden: false, type: 'input', hint: '只能输入小写字母', value: {}},
         {
             id: 'ele_type',
@@ -60,7 +61,7 @@ window['data'] = {
         },
         {id: 'occupy_col', text: '占用列', hidden: false, type: 'input', hint: '输入列数', value: {}},
         {id: 'occupy_row', text: '占用行', hidden: false, type: 'input', hint: '输入行数（只对textarea生效）', value: {}},
-        {id: 'calculate', text: '计算公式', hiddeng:false, type: 'input', hint: '点击编辑计算公式', value:{}},
+        {id: 'calculate', text: '计算公式', hiddeng: false, type: 'input', hint: '点击编辑计算公式', value: {}},
         {id: 'show_seq', text: '显示顺序', hidden: true, type: 'input', hint: '', value: {}}
     ],
     //添加表格的数据
@@ -201,7 +202,7 @@ window['data'] = {
 //页面元素右键菜单执行函数
 var menuFun = {
     addform: function (type, ele_id, title, ele_type) {
-        $("#"+type).find('input[name=idele]').val('');//清空主键信息，避免新增被当作修改处理
+        $("#" + type).find('input[name=idele]').val('');//清空主键信息，避免新增被当作修改处理
         showAlertEle(ele_type, type);
         openalert(type, ele_id, title, ele_type);
     },
@@ -236,9 +237,129 @@ var menuFun = {
     },
     cssstyle: function (type, ele_id, title) {
         openalert(type, ele_id, title, updDataShow(type, ele_id));
+    },
+    href: function (type, ele_id, title, ele_type) {
+        if (ele_type == '10')
+            window.open(window.location.href + '&preview=true');
+        else if (ele_type == '11') {
+            if (page_type != 1)
+                $.ajax({
+                    url: '/dpage/savePage',
+                    async: false,
+                    data: {idpage: getQueryString('idpage')}, type: "POST"
+                });
+            if (page_type == 4) {
+                var content = $($("#optfile").find("form").html());
+                content.find('td').find('span').find('span').remove();
+                content.find('td').find('span').find('div').remove();
+                content.find('td').find('span').each(function () {
+                    $(this).find('span').remove();
+                    $(this).find('div').remove();
+                    var str = '', v = '';
+                    $(this).children().each(function () {
+                        if (v === $(this).attr('name').replace(/\[[\D\d]*\]/ig, '')) return;
+                        v = $(this).attr('name').replace(/\[[\D\d]*\]/ig, '');
+                        str += $(this).attr('name').replace(/\[[\D\d]*\]/ig, '') + ',';
+                    });
+                    $(this).parent().append('<div>').append(str).append('</div>');
+                    //console.log($($(this).first().html()).attr('name'))
+                });
+                var lentd = $(content.find('table').find('tr')[0]).find('td').length;
+                var str = '<tr>';
+                for (var i = 0; i < lentd; i++) {
+                    str += '<td><input type="checkbox" name="col" value="' + (i + 1) + '">第' + (i + 1) + '列</td>';
+                }
+                content.find('table').prepend(str + '</tr>');
+                content.find('table').find('tr').each(function (index, ele) {
+                    if (index === 0) $(ele).append('<td style="width: 200px;">条件</td>');
+                    else {
+                        $(ele).append('<td row="' + (index - 1) + '"><input name="row" class="conditionRow" type="text" style="width: 100%"></td>')
+                    }
+                });
+                //条件取值填写还存在问题，当等于某个固定的字符串是可能会出错
+                layer.open({
+                    type: 1,
+                    title: '选择需要保存列数据及条件（ <span style="color:red;font-weight: 900;">选择在评估结果中需要保存值的列以及评估结果的取值条件</span> ）',
+                    area: ['1220px', '90%'],
+                    content: '<div style="margin-top: 20px;"></div>' + content.html(),//'<div class="layui-form"><div id="calculatecon">'+$("#optfile").find("form").html()+"</div></div>",
+                    btn: ['确定', '取消'],
+                    yes: function (index, layero) {
+                        layero = layero.find('table');
+                        var col = '', row = '';
+                        layero.find('input[name=col]').each(function () {
+                            if (this.checked) col += "'" + this.value + "',";
+                        });
+                        layero.find('input[name=row]').each(function () {
+                            if (this.value)
+                                row += $(this).parent().attr('row') + '~' + this.value + ',';
+                        });
+                        $.ajax({
+                            url: '/dpage/saveCondition',
+                            method: 'POST',
+                            data: {
+                                idpage: getQueryString("idpage"),
+                                col: col.substring(0, col.length - 1),
+                                row: row.substring(0, row.length - 1)
+                            },
+                            success: function (res) {
+                                layer.msg("保存成功", function () {
+                                    layer.closeAll();
+                                    callback();
+                                });
+                            },
+                            error: function (res) {
+                                layer.msg("保存失败", function () {
+                                    layer.closeAll();
+                                });
+                            }
+                        })
+                    },
+                    btn2: function (index, layero) {
+
+                    }
+                });
+            } else
+                layer.msg('保存完成', {icon: 1}, function () {
+                    callback();
+                });
+        }
     }
 };
-
+function callback(){
+    if (url == null || url === '') {
+        if (self != top) {
+            window.history.back();
+        } else
+            window.close();
+    } else {
+        $.ajax({
+            url: url + (url.indexOf('?') === -1 ? "?" : "&") + "idpage=" + idpage,
+            async: false,
+            //data: data,
+            type: "POST",
+            dataType: "jsonp",
+            success: function (res) {
+                console.log(res);
+                layer.alert("保存完成", function (index) {
+                    if (self != top) {
+                        window.history.back();
+                    } else
+                        window.close();
+                });
+            },
+            error: function (res) {
+                console.log(res);
+                if (res.status === 200)
+                    layer.alert("保存完成", function (index) {
+                        if (self != top) {
+                            window.history.back();
+                        } else
+                            window.close();
+                    });
+            }
+        });
+    }
+}
 //表格操作基础数据
 window['tabledata'] = {
     tableobj: null,//当前表格对象
@@ -255,7 +376,7 @@ window['tabledata'] = {
                     success: function (res) {
                         desc = res[0].showcontent;
                     }
-                })
+                });
                 layer.open({
                     type: 1,
                     content: '<div style="padding:20px 20px 0px 0px"><form class="layui-form" action="">' +
@@ -271,6 +392,11 @@ window['tabledata'] = {
                             url: '/dpage/updPageTable',//对同一个表的不同字段修改，可以直接就用一个接口
                             async: true,
                             data: {
+                                rowspan: tabledata.downElement.rowspan,
+                                colspan: tabledata.downElement.colspan,
+                                tdrow: tabledata.downElement.row,
+                                tdcol: tabledata.downElement.col,
+                                idele: $(selectedEle).attr('ele_id'),
                                 idtable: tabledata.downElement.idtable,
                                 showcontent: ele.find('textarea[name=desc]').val()
                             },
@@ -292,30 +418,40 @@ window['tabledata'] = {
         },
         {
             id: 'tableFormEle', text: '新增表单元素', func: function () {
-                var desc = '';
-                tableopenalert('tableFormEle',function (formele) {
-                    formele[formele.length]={};
-                    formele[formele.length-1]['name']='page_table_id';
-                    formele[formele.length-1]['value']=tabledata.downElement.idtable;
-                    console.log(formele);
+                tableopenalert('tableFormEle', function (formele) {
+                    var formid;
+                    for (var i = 0; i < formele.length; i++) {
+                        if (formele[i].name !== 'ele_id') continue;
+                        formid = formele[i].value + (tabledata.downElement.formid ? ',' + tabledata.downElement.formid : '');
+                    }
+                    formele[formele.length] = {name: 'formid', value: formid};
+                    formele[formele.length] = {name: 'page_table_id', value: tabledata.downElement.idtable};
+                    formele[formele.length] = {name: 'rowspan', value: tabledata.downElement.rowspan};
+                    formele[formele.length] = {name: 'colspan', value: tabledata.downElement.colspan};
+                    formele[formele.length] = {name: 'tdrow', value: tabledata.downElement.row};
+                    formele[formele.length] = {name: 'tdcol', value: tabledata.downElement.col};
+                    formele[formele.length] = {name: 'idele', value: $(selectedEle).attr('ele_id')};
                     $.ajax({
                         url: '/dpage/insetTableEle',
                         async: false,
                         data: formele,
                         success: function (res) {
-                            console.log(res);
+                            //console.log(res);
                             if (res * 1 > 0) window.location.reload();
                             else layer.msg("保存失败");
                         }
                     })
                 });
+                //删除ids中的当前弹窗中的元素id，避免做id重复性校验是不能输入当前已有元素的id
                 $.ajax({
                     url: '/dpage/getTableCol',
                     async: false,
                     data: {idtable: tabledata.downElement.idtable,},
                     success: function (res) {
-                        courrentId=res[0].ele_id
+                        courrentId = res[0].ele_id;
                         delete ids[courrentId];
+                        //在formid中去掉当前id
+                        tabledata.downElement.formid.replace(eval('/,' + courrentId + '/ig'), '').replace(eval('/' + courrentId + ',/ig'), '').replace(eval('/' + courrentId + '/ig'), '');
                         form.val("tableFormEle", res[0]);
                     }
                 })
@@ -340,7 +476,10 @@ window['tabledata'] = {
                         erow: erow,
                         col: ecol - scol + 1,
                         row: erow - srow + 1,
-                        idele: idele
+                        idele: idele,
+                        formid: tabledata.downElement.formid,
+                        showcontent: tabledata.downElement.text,
+                        downtdid: tabledata.downElement.idtable
                     },
                     type: "POST",
                     success: function (res) {
@@ -362,7 +501,8 @@ window['tabledata'] = {
                     idele: $(selectedEle).attr("ele_id"),
                     idtable: tabledata.downElement.idtable,
                     colspan: tabledata.downElement.colspan,
-                    rowspan: tabledata.downElement.rowspan
+                    rowspan: tabledata.downElement.rowspan,
+                    showcontent: tabledata.downElement.text
                 };
                 $.ajax({
                     url: '/dpage/tdBreak',
@@ -474,7 +614,9 @@ window['tabledata'] = {
             }
         }
     ],
-    downElement: null,//鼠标按下对应的元素,json格式，彪悍行列信息
-    upElement: null,//鼠标松开对应的元素,json格式，彪悍行列信息
-    previousElement: null//当前记录的前一个td元素,json格式，彪悍行列信息
+    downElement: null,//鼠标按下对应的元素,json格式，标记行列信息
+    upElement: null,//鼠标松开对应的元素,json格式，标记行列信息
+    previousElement: null,//当前记录的前一个td元素,json格式，标记行列信息
+    merge: true,//可合并（右键菜单显示）
+    break: true//可拆分（右键菜单显示）
 };

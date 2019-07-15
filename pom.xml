@@ -69,6 +69,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <mainClass>com.emreditor.EmreditorApplication</mainClass>
                     <fork>true</fork>
                 </configuration>
             </plugin>

@@ -1,5 +1,8 @@
 package com.emreditor.beans;
 
+/**
+ * 没有使用
+ */
 public class RecordValue {
     private String idrecord;//主要信息id
     private String idrecord_value;//主键

@@ -6,6 +6,7 @@ import com.emreditor.beans.Page_table;
 import com.emreditor.beans.Page_table_ele;
 import org.apache.ibatis.jdbc.SQL;
 
+import java.util.List;
 import java.util.Map;
 
 public class PageMapperProvider extends SQL {
@@ -23,9 +24,9 @@ public class PageMapperProvider extends SQL {
                 if (page.getIdpage() != null && page.getIdpage().length() > 0)
                     WHERE("idpage = #{idpage}");
                 if (page.getPage_type() != null && page.getPage_type().length() > 0)
-                    WHERE("page_type = #{idpage}");
-                if (page.getPage_title() != null && page.getPage_title().length() > 0)
-                    WHERE("page_title like CONCAT('%',#{page_title},'%')");
+                    WHERE("page_type = #{page_type}");
+                //if (page.getPage_title() != null && page.getPage_title().length() > 0)
+                    //WHERE("page_title like CONCAT('%',#{page_title},'%')");
             }
         }.toString();
     }
@@ -347,6 +348,35 @@ public class PageMapperProvider extends SQL {
         }.toString();
     }
 
+    /**
+     * 新建一个模板新建一个表保存数据
+     * @param page_ele
+     * @param ele_id
+     * @return
+     */
+    public String createTable(Page_ele page_ele, List<String> ele_id){
+        StringBuilder sb=new StringBuilder("create table `emr`.`").append(page_ele.getIdpage()).append("` (")
+        .append("`id` VARCHAR(36) NOT NULL,")
+        .append("`opt_time` TIMESTAMP NOT NULL DEFAULT NOW(),");
+        for(String str : ele_id){
+            sb.append("`").append(str.trim()).append("` ").append("text NULL,");
+        }
+        sb.append("PRIMARY KEY (`id`))");
+        return sb.toString();
+    }
+    public String alterTable(Page_ele page_ele, List<String> ele_id){
+        StringBuilder sb=new StringBuilder("alter table `emr`.`").append(page_ele.getIdpage()).append("` ");
+        for(int i=0,len=ele_id.size();i<len;i++){
+            sb.append("ADD COLUMN `").append(ele_id.get(i)).append("` text NULL");
+            if(i==len-1) sb.append(";");
+            else sb.append(",");
+        }
+        return sb.toString();
+    }
+    public String dropTable(String idpage){
+        return new StringBuilder("DROP TABLE IF EXISTS `emr`.`").append(idpage).append("` ").toString();
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////         表格操作部分        //////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -388,7 +418,6 @@ public class PageMapperProvider extends SQL {
     }
 
     /**
-     * \
      * 根据page_table获取table详情信息
      *
      * @param page_table 查询条件

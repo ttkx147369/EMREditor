@@ -8,15 +8,27 @@ public class Page implements java.io.Serializable {
      * 病历主表
      */
     private static final long serialVersionUID = 1L;
-
+    //页面id
     private String idpage;
+    //页面更新时间
     private Date page_update;
+    // 页面类型
+    // 1：信息展示页，不包含表单字段，
+    // 2：普通表单填写页面，不包含任何计算和评估结果，
+    // 3：简单评估表单页面（包含计算公式），只有一个结果或多个结果，结果包含在表单项中，
+    // 4：复杂评估表单页面，包含多个结果，评估结果不仅仅在表单项中，还包含其他内容
     private String page_type;
+    //页面标题
     private String page_title;
+    //页面创建时间
     private Date page_create;
+    //页面背景图
     private String page_backimg;
-    private String textcss;//字体样式
-    private String cssstyle;//内容样式
+    //字体样式
+    private String textcss;
+    //内容样式
+    private String cssstyle;
+
     private String pagecol5;
     private String pagecol4;
     private String pagecol3;

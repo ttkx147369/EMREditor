@@ -1,7 +1,7 @@
 package com.emreditor.service;
 
 import com.emreditor.beans.Record;
-import com.emreditor.beans.RecordValue;
+import com.emreditor.beans.RecordResult;
 import com.emreditor.dao.EmrRecordDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -61,53 +61,77 @@ public class EmrRecordService {
      */
     public int insertRecordValue(HttpServletRequest request) {
         int res = 0;
+        String idpage=request.getParameter("idpage");
         String idrecord = request.getParameter("idrecord");
         String state = request.getParameter("state");
-        Map<String, String[]> map = request.getParameterMap();
-        Iterator<String> name = map.keySet().iterator();
         //修改记录状态
         Record record = new Record();
         record.setIdrecord(idrecord);
         record.setRecord_state(state);
         emrRecordDao.updRecord(record);
-        //将之前的记录数据删除
-        RecordValue recordValue = new RecordValue();
-        recordValue.setIdrecord(idrecord);
-        emrRecordDao.deleteRecordValue(recordValue);
+        emrRecordDao.deleteRecordResult(idrecord);//删除之前的评估结果
+        Map<String, String[]> map = request.getParameterMap();
+        Set<String> set=new TreeSet<>();//用TreeSet包装一下，让Set有序
+        set.addAll(map.keySet());
+        Iterator<String> name = set.iterator();
+
+        StringBuilder sql=new StringBuilder("insert into `").append(idpage).append("`(`");
+        StringBuilder updsql=new StringBuilder("update `").append(idpage).append("` set `");
+        StringBuilder val=new StringBuilder(") values('");
+        String k="";
         while (name.hasNext()) {
             String key = name.next();
-            if ("idrecord".equals(key) || "state".equals(key)) continue;
+            if ("idrecord".equals(key) || "state".equals(key) || "idpage".equals(key)) continue;
             String[] value = map.get(key);
+            key=key.split("\\[")[0];
             StringBuilder v = new StringBuilder();
             for (int i = 0, len = value.length; i < len; i++) {
                 if (i != 0) v.append(",");
+                //v.append(value[i].replaceAll(",", "，").replaceAll("\\[", "【").replaceAll("]", "】"));
                 v.append(value[i]);
             }
-            RecordValue r = new RecordValue();
-            r.setIdrecord(idrecord);
-            r.setIdrecord_value(UUID.randomUUID().toString());
-            r.setRecord_ele(key);
-            r.setRecord_value(v.toString());
-            res += emrRecordDao.insertRecordValue(r);
+            if(k.length()>0){
+                if(!k.equals(key)){
+                    val.append("','").append(v);
+                    sql.append("`,`").append(key);
+                    updsql.append("',`").append(key).append("`='").append(v);
+                    k=key;
+                }else{
+                    val.append(",").append(v);
+                    updsql.append(",").append(v);
+                }
+            }else {
+                val.append(v);
+                sql.append(key);
+                updsql.append(key).append("`='").append(v);
+                k=key;
+            }
         }
+        updsql=new StringBuilder(updsql).append("' where id='").append(idrecord).append("'");
+        res=emrRecordDao.updateRecordValue(updsql);
+        if(res>0) return res;
+
+        sql.append("`,`id`").append(val).append("','").append(idrecord).append("')");
+        res=emrRecordDao.insertRecordValue(sql);
         return res;
     }
 
     /**
      * 条件查询详情记录表
      *
-     * @param recordValue 1
+     * @param request 1
      * @return 1
      */
-    public List<RecordValue> getRecordValue(RecordValue recordValue) {
-        return emrRecordDao.getRecordValue(recordValue);
+    public List<Map<String, Object>> getRecordValue(HttpServletRequest request) {
+        String idrecord=request.getParameter("idrecord");
+        String idpage=request.getParameter("idpage");
+        return emrRecordDao.getRecordValue(new StringBuilder("select * from `").append(idpage).append("` where id='").append(idrecord).append("'"));
     }
 
     public int deleterecord(Record record) {
-        RecordValue recordValue = new RecordValue();
-        recordValue.setIdrecord(record.getIdrecord());
-        int res = emrRecordDao.deleteRecordValue(recordValue);
-        /*if(res>0)*/
+        StringBuilder sb=new StringBuilder("delete from `").append(record.getIdpage()).append("` where id='").append(record.getIdrecord()).append("'");
+        int res = emrRecordDao.deleteRecordValue(sb);
+        res = emrRecordDao.deleteRecordResult(record.getIdrecord());
         res = emrRecordDao.deleterecord(record);//有判断没填写删不了
         return res;
     }
@@ -118,8 +142,9 @@ public class EmrRecordService {
      * @param request 1
      * @return 1
      */
-    public List<Map<String, Object>> getPartRecordValue(HttpServletRequest request) {
+    /*public List<Map<String, Object>> getPartRecordValue(HttpServletRequest request) {
         String name = request.getParameter("names");//多个用英文逗号分隔，带belong后缀不用写出来
+        String idrecord = request.getParameter("idrecord");
         if (name == null) return null;
         List<Map<String, Object>> res = null;
         Map<String, String> map;
@@ -127,10 +152,28 @@ public class EmrRecordService {
             map = new HashMap<>();
             map.put("namel", s + "[%");//需要获取值的name属性集合
             map.put("nameb", s + "belong");//需要获取值的name属性集合
-            map.put("idrecord", request.getParameter("idrecord"));//评估记录表主键
+            map.put("idrecord", idrecord);//评估记录表主键
             if (res == null) res = emrRecordDao.getPartRecordValue(map);
             else res.addAll(emrRecordDao.getPartRecordValue(map));
         }
         return res;
+    }*/
+
+    /**
+     * 保存评估结果到评估表中
+     * @param recordResult 1
+     * @return 1
+     */
+    public int saveRecordValue(RecordResult recordResult) {
+        recordResult.setIdrecord_result(UUID.randomUUID().toString());
+        return emrRecordDao.saveRecordValue(recordResult);
+    }
+    /**
+     * 查询评估结果
+     * @param recordResult 1
+     * @return 1
+     */
+    public List<RecordResult> getRecordResult(RecordResult recordResult) {
+        return emrRecordDao.getRecordResult(recordResult);
     }
 }

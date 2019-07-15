@@ -1,6 +1,7 @@
 package com.emreditor.dao;
 
 import com.emreditor.beans.Record;
+import com.emreditor.beans.RecordResult;
 import com.emreditor.beans.RecordValue;
 import org.apache.ibatis.jdbc.SQL;
 
@@ -117,16 +118,11 @@ public class RecordMapperProvider extends SQL {
     /**
      * 删除记录详细信息
      *
-     * @param recordValue 1
+     * @param stringBuilder 1
      * @return 1
      */
-    public String deleteRecordValue(RecordValue recordValue) {
-        return new SQL() {
-            {
-                DELETE_FROM("record_value");
-                WHERE("idrecord=#{idrecord}");
-            }
-        }.toString();
+    public String deleteRecordValue(StringBuilder stringBuilder) {
+        return stringBuilder.toString();
     }
 
     /**
@@ -135,45 +131,26 @@ public class RecordMapperProvider extends SQL {
      * @param recordValue 1
      * @return 1
      */
-    public String insertRecordValue(RecordValue recordValue) {
-        INSERT_INTO("record_value");
-        if (recordValue.getIdrecord() != null && recordValue.getIdrecord().length() > 0)
-            VALUES("idrecord", "#{idrecord}");
-        if (recordValue.getIdrecord_value() != null && recordValue.getIdrecord_value().length() > 0)
-            VALUES("idrecord_value", "#{idrecord_value}");
-        if (recordValue.getRecord_ele() != null && recordValue.getRecord_ele().length() > 0)
-            VALUES("record_ele", "#{record_ele}");
-        if (recordValue.getRecord_value() != null && recordValue.getRecord_value().length() > 0)
-            VALUES("record_value", "#{record_value}");
-        if (recordValue.getRecordcol() != null && recordValue.getRecordcol().length() > 0)
-            VALUES("recordcol", "#{recordcol}");
-        if (recordValue.getRecordcol1() != null && recordValue.getRecordcol1().length() > 0)
-            VALUES("recordcol1", "#{recordcol1}");
-        return toString();
+    public String insertRecordValue(StringBuilder recordValue) {
+        return recordValue.toString();
     }
-
     /**
-     * 条件查询详情记录表
+     * 更新评估详细记录
      *
      * @param recordValue 1
      * @return 1
      */
-    public String getRecordValue(RecordValue recordValue) {
-        SELECT("*");
-        FROM("record_value");
-        if (recordValue.getIdrecord() != null && recordValue.getIdrecord().length() > 0)
-            WHERE("idrecord=#{idrecord}");
-        if (recordValue.getIdrecord_value() != null && recordValue.getIdrecord_value().length() > 0)
-            WHERE("idrecord_value=#{idrecord_value}");
-        if (recordValue.getRecord_ele() != null && recordValue.getRecord_ele().length() > 0)
-            WHERE("record_ele=#{record_ele}");
-        if (recordValue.getRecord_value() != null && recordValue.getRecord_value().length() > 0)
-            WHERE("record_value=#{record_value}");
-        if (recordValue.getRecordcol() != null && recordValue.getRecordcol().length() > 0)
-            WHERE("recordcol=#{recordcol}");
-        if (recordValue.getRecordcol1() != null && recordValue.getRecordcol1().length() > 0)
-            WHERE("recordcol1=#{recordcol1}");
-        return toString();
+    public String updateRecordValue(StringBuilder recordValue) {
+        return recordValue.toString();
+    }
+    /**
+     * 条件查询详情记录表
+     *
+     * @param sql 1
+     * @return 1
+     */
+    public String getRecordValue(StringBuilder sql) {
+        return sql.toString();
     }
 
     public String deleterecord(Record record) {
@@ -204,6 +181,45 @@ public class RecordMapperProvider extends SQL {
             WHERE("recordcol4=#{recordcol4}");
         if (record.getRecordcol5() != null && record.getRecordcol5().length() > 0)
             WHERE("recordcol5=#{recordcol5}");
+        return toString();
+    }
+
+    public String saveRecordValue(RecordResult recordResult){
+        INSERT_INTO("record_result");
+        if (recordResult.getIdrecord_result() != null && recordResult.getIdrecord_result().length() > 0)
+            VALUES("idrecord_result","#{idrecord_result}");
+        if (recordResult.getIdpage() != null && recordResult.getIdpage().length() > 0)
+            VALUES("idpage", "#{idpage}");
+        if (recordResult.getIdrecord() != null && recordResult.getIdrecord().length() > 0)
+            VALUES("idrecord", "#{idrecord}");
+        if (recordResult.getRecord_result() != null && recordResult.getRecord_result().length() > 0)
+            VALUES("record_result", "#{record_result}");
+        if (recordResult.getBak1() != null && recordResult.getBak1().length() > 0)
+            VALUES("bak1", "#{bak1}");
+        if (recordResult.getBak2() != null && recordResult.getBak2().length() > 0)
+            VALUES("bak2", "#{bak2}");
+        if (recordResult.getBak3() != null && recordResult.getBak3().length() > 0)
+            VALUES("bak3", "#{bak3}");
+        return toString();
+    }
+
+    public String getRecordResult(RecordResult recordResult){
+        SELECT("*");
+        FROM("record_result");
+        if (recordResult.getIdrecord_result() != null && recordResult.getIdrecord_result().length() > 0)
+            WHERE("idrecord_result=#{idrecord_result}");
+        if (recordResult.getIdpage() != null && recordResult.getIdpage().length() > 0)
+            WHERE("idpage=#{idpage}");
+        if (recordResult.getIdrecord() != null && recordResult.getIdrecord().length() > 0)
+            WHERE("idrecord=#{idrecord}");
+        //if (recordResult.getRecord_result() != null && recordResult.getRecord_result().length() > 0)
+        //    WHERE("record_result=#{record_result}");
+        if (recordResult.getBak1() != null && recordResult.getBak1().length() > 0)
+            WHERE("bak1=#{bak1}");
+        if (recordResult.getBak2() != null && recordResult.getBak2().length() > 0)
+            WHERE("bak2=#{bak2}");
+        if (recordResult.getBak3() != null && recordResult.getBak3().length() > 0)
+            WHERE("bak3=#{bak3}");
         return toString();
     }
 }
